@@ -6,26 +6,7 @@
     <groupId>guru.springframework</groupId>
     <artifactId>mssc-beer-order-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>mssc-beer-order-service</name>
-    <description>MSSC Beer Order Service</description>
-
-    <licenses>
-        <license>
-            <name>GNU General Public License v3.0</name>
-            <url>https://www.gnu.org/licenses/gpl.txt</url>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>Spring Framework Guru</name>
-    </organization>
-
-    <developers>
-        <developer>
-            <name>John Thompson</name>
-            <organization>Spring Framework Guru</organization>
-        </developer>
-    </developers>
+    <name>Beer Order Service</name>
 
     <dependencyManagement>
         <dependencies>
@@ -37,7 +18,6 @@
                 <scope>import</scope>
             </dependency>
         </dependencies>
-
     </dependencyManagement>
 
     <properties>
@@ -120,6 +100,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.1.4</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -137,6 +118,11 @@
                             <artifactId>lombok</artifactId>
                             <version>${lombok.version}</version>
                         </path>
+                        <dependency>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>0.2.0</version>
+                        </dependency>
                     </annotationProcessorPaths>
                     <compilerArgs>
                         <compilerArg>
