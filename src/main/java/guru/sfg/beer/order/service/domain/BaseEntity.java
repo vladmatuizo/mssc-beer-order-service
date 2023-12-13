@@ -49,7 +49,7 @@ public class BaseEntity {
 
     @Id
     @UuidGenerator
-    @Column(length = 36, columnDefinition = "varchar(36)", updatable = false, nullable = false )
+    @Column(length = 36, updatable = false, nullable = false )
     private UUID id;
 
     @Version
