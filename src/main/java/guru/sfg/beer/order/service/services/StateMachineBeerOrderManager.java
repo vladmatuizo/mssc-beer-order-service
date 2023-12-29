@@ -19,7 +19,10 @@ import static guru.sfg.beer.order.service.domain.BeerOrderStatusEnum.NEW;
 @RequiredArgsConstructor
 public class StateMachineBeerOrderManager implements BeerOrderManager {
 
+    public static final String BEER_ORDER_ID_HEADER = "beer_order_id";
+
     private final StateMachineFactory<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachineFactory;
+    private final BeerOrderStateChangeInterceptor beerOrderStateChangeInterceptor;
 
     private final BeerOrderRepository beerOrderRepository;
 
@@ -36,7 +39,9 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEvent) {
         StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachine = buildStateMachine(beerOrder);
 
-        Message<BeerOrderEventEnum> message = MessageBuilder.withPayload(beerOrderEvent).build();
+        Message<BeerOrderEventEnum> message = MessageBuilder.withPayload(beerOrderEvent)
+                .setHeader(BEER_ORDER_ID_HEADER, beerOrder.getId().toString())
+                .build();
 
         stateMachine.sendEvent(message);
     }
@@ -48,6 +53,7 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
 
         stateMachine.getStateMachineAccessor()
                 .doWithAllRegions(access -> {
+                    access.addStateMachineInterceptor(beerOrderStateChangeInterceptor);
                     access.resetStateMachine(new DefaultStateMachineContext<>(beerOrder.getOrderStatus(), null, null, null));
                 });
 
