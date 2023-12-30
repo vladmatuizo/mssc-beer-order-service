@@ -13,7 +13,11 @@ import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATE_ORDER;
+import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
+import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
 import static guru.sfg.beer.order.service.domain.BeerOrderStatusEnum.NEW;
 
 @Service
@@ -35,6 +39,13 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
         BeerOrder savedOrder = beerOrderRepository.save(beerOrder);
         sendBeerOrderEvent(savedOrder, VALIDATE_ORDER);
         return savedOrder;
+    }
+
+    @Override
+    public void processValidationResult(UUID orderId, boolean isValid) {
+        BeerOrder beerOrder = beerOrderRepository.findById(orderId).orElseThrow();
+
+        sendBeerOrderEvent(beerOrder, isValid ? VALIDATION_PASSED : VALIDATION_FAILED);
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEvent) {
