@@ -10,6 +10,7 @@ import org.springframework.jms.support.converter.MessageType;
 @Configuration
 public class MessagingConfig {
 
+    public static final String VALIDATE_ORDER_QUEUE_NAME = "validate-order";
     @Bean
     public MessageConverter jacksonJmsMessageConverter(ObjectMapper objectMapper) {
         MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
