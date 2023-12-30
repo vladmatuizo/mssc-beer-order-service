@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATE_ORDER;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATE_ORDER;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
@@ -45,7 +46,17 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
     public void processValidationResult(UUID orderId, boolean isValid) {
         BeerOrder beerOrder = beerOrderRepository.findById(orderId).orElseThrow();
 
-        sendBeerOrderEvent(beerOrder, isValid ? VALIDATION_PASSED : VALIDATION_FAILED);
+        if (isValid) {
+            sendBeerOrderEvent(beerOrder, VALIDATION_PASSED);
+
+            BeerOrder validatedOrder = beerOrderRepository.findById(orderId).orElseThrow();
+
+            sendBeerOrderEvent(validatedOrder, ALLOCATE_ORDER);
+        } else {
+            sendBeerOrderEvent(beerOrder, VALIDATION_FAILED);
+        }
+
+
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEvent) {

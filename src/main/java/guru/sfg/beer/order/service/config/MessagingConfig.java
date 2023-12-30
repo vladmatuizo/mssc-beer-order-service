@@ -12,6 +12,7 @@ public class MessagingConfig {
 
     public static final String VALIDATE_ORDER_QUEUE_NAME = "validate-order";
     public static final String VALIDATE_ORDER_RESPONSE_QUEUE_NAME = "validate-order-response";
+    public static final String ALLOCATE_ORDER_QUEUE_NAME = "allocate-order";
 
     @Bean
     public MessageConverter jacksonJmsMessageConverter(ObjectMapper objectMapper) {
