@@ -1,5 +1,6 @@
 package guru.sfg.beer.order.service.services;
 
+import com.example.common.model.BeerOrderDto;
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.BeerOrderEventEnum;
 import guru.sfg.beer.order.service.domain.BeerOrderStatusEnum;
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATE_ORDER;
+import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_FAILED;
+import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
+import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATE_ORDER;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
@@ -55,8 +59,41 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
         } else {
             sendBeerOrderEvent(beerOrder, VALIDATION_FAILED);
         }
+    }
 
+    @Override
+    public void processSuccessfulBeerOrderAllocation(BeerOrderDto beerOrder) {
+        BeerOrder allocatedOrder = beerOrderRepository.findById(beerOrder.getId()).orElseThrow();
+        sendBeerOrderEvent(allocatedOrder, ALLOCATION_SUCCESS);
 
+        updateAllocatedQuantity(beerOrder);
+    }
+
+    @Override
+    public void processBeerOrderAllocationPendingInventory(BeerOrderDto beerOrder) {
+        BeerOrder allocatedOrder = beerOrderRepository.findById(beerOrder.getId()).orElseThrow();
+        sendBeerOrderEvent(allocatedOrder, ALLOCATION_NO_INVENTORY);
+
+        updateAllocatedQuantity(beerOrder);
+    }
+
+    private void updateAllocatedQuantity(BeerOrderDto beerOrderDto) {
+        BeerOrder allocatedOrder = beerOrderRepository.findById(beerOrderDto.getId()).orElseThrow();
+
+        allocatedOrder.getBeerOrderLines().forEach(beerOrderLine ->
+                beerOrderDto.getBeerOrderLines().forEach(beerOrderLineDto -> {
+                    if (beerOrderLine.getId().equals(beerOrderLineDto.getId())) {
+                        beerOrderLine.setQuantityAllocated(beerOrderLineDto.getQuantityAllocated());
+                    }
+                }));
+
+        beerOrderRepository.saveAndFlush(allocatedOrder);
+    }
+
+    @Override
+    public void processBeerOrderAllocationFailure(BeerOrderDto beerOrder) {
+        BeerOrder failedOrder = beerOrderRepository.findById(beerOrder.getId()).orElseThrow();
+        sendBeerOrderEvent(failedOrder, ALLOCATION_FAILED);
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEvent) {
