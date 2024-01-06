@@ -96,6 +96,11 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
         sendBeerOrderEvent(failedOrder, ALLOCATION_FAILED);
     }
 
+    @Override
+    public void processBeerOrderPickUp(BeerOrderDto beerOrder) {
+
+    }
+
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEvent) {
         StateMachine<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachine = buildStateMachine(beerOrder);
 

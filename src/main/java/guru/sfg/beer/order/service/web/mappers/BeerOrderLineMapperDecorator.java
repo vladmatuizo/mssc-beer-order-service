@@ -2,7 +2,7 @@ package guru.sfg.beer.order.service.web.mappers;
 
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
 import guru.sfg.beer.order.service.services.beer.BeerService;
-import guru.sfg.beer.order.service.services.beer.model.BeerDto;
+import com.example.common.model.BeerDto;
 import com.example.common.model.BeerOrderLineDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,10 +31,10 @@ public class BeerOrderLineMapperDecorator implements BeerOrderLineMapper {
         Optional<BeerDto> beerDtoOptional = beerService.getBeerByUpc(line.getUpc());
 
         beerDtoOptional.ifPresent(beerDto -> {
-            orderLineDto.setBeerId(beerDto.id());
-            orderLineDto.setBeerName(beerDto.beerName());
-            orderLineDto.setBeerStyle(beerDto.beerStyle());
-            orderLineDto.setPrice(beerDto.price());
+            orderLineDto.setBeerId(beerDto.getId());
+            orderLineDto.setBeerName(beerDto.getBeerName());
+            orderLineDto.setBeerStyle(beerDto.getBeerStyle());
+            orderLineDto.setPrice(beerDto.getPrice());
         });
         return orderLineDto;
     }
