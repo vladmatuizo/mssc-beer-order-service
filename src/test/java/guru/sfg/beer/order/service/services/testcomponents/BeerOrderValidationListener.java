@@ -1,5 +1,6 @@
 package guru.sfg.beer.order.service.services.testcomponents;
 
+import com.example.common.model.BeerOrderDto;
 import com.example.common.model.event.ValidateOrderRequest;
 import com.example.common.model.event.ValidateOrderResult;
 import guru.sfg.beer.order.service.config.MessagingConfig;
@@ -23,11 +24,17 @@ public class BeerOrderValidationListener {
 
     @JmsListener(destination = VALIDATE_ORDER_QUEUE_NAME)
     public void listen(ValidateOrderRequest request) {
-        UUID orderId = request.beerOrder().getId();
+        BeerOrderDto beerOrder = request.beerOrder();
+        UUID orderId = beerOrder.getId();
 
         log.debug("Received validation request for order {}", orderId.toString());
 
-        jmsTemplate.convertAndSend(VALIDATE_ORDER_RESPONSE_QUEUE_NAME,
-                new ValidateOrderResult(orderId, true));
+        String customerRef = beerOrder.getCustomerRef();
+        boolean isValid = !"fail-validation".equals(customerRef);
+
+        if (!"cancel-order-before-validation".equals(customerRef)) {
+            jmsTemplate.convertAndSend(VALIDATE_ORDER_RESPONSE_QUEUE_NAME,
+                    new ValidateOrderResult(orderId, isValid));
+        }
     }
 }

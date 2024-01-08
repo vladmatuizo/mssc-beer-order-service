@@ -14,6 +14,8 @@ public class MessagingConfig {
     public static final String VALIDATE_ORDER_RESPONSE_QUEUE_NAME = "validate-order-response";
     public static final String ALLOCATE_ORDER_QUEUE_NAME = "allocate-order";
     public static final String ALLOCATE_ORDER_RESPONSE_QUEUE_NAME = "allocate-order-response";
+    public static final String DEALLOCATE_ORDER_QUEUE_NAME = "deallocate-order";
+    public static final String ALLOCATION_FAILURE_QUEUE_NAME = "allocation-failure";
 
     @Bean
     public MessageConverter jacksonJmsMessageConverter(ObjectMapper objectMapper) {

@@ -31,11 +31,22 @@ public class BeerOrderAllocationListener {
 
         log.debug("Received allocation request for order {}", beerOrder.getId().toString());
 
+        String customerRef = beerOrder.getCustomerRef();
+        boolean isAllocationFailed = "fail-allocation".equals(customerRef);
+        boolean isPendingInventory = "partial-allocation".equals(customerRef);
+
         beerOrder.getBeerOrderLines().forEach(beerOrderLineDto -> {
-            beerOrderLineDto.setQuantityAllocated(beerOrderLineDto.getOrderQuantity());
+            Integer orderQuantity = beerOrderLineDto.getOrderQuantity();
+            beerOrderLineDto.setQuantityAllocated(isPendingInventory ? orderQuantity - 1 : orderQuantity);
         });
 
-        jmsTemplate.convertAndSend(ALLOCATE_ORDER_RESPONSE_QUEUE_NAME,
-                AllocateOrderResult.builder().beerOrder(beerOrder).build());
+        if (!"cancel-order-before-allocation".equals(customerRef)) {
+            jmsTemplate.convertAndSend(ALLOCATE_ORDER_RESPONSE_QUEUE_NAME,
+                    AllocateOrderResult.builder()
+                            .beerOrder(beerOrder)
+                            .allocationError(isAllocationFailed)
+                            .pendingInventory(isPendingInventory)
+                            .build());
+        }
     }
 }
