@@ -1,6 +1,6 @@
 package guru.sfg.beer.order.service.services;
 
-import com.example.common.model.BeerPagedList;
+import com.example.common.model.BeerDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -11,19 +11,16 @@ import guru.sfg.beer.order.service.domain.BeerOrderStatusEnum;
 import guru.sfg.beer.order.service.domain.Customer;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.repositories.CustomerRepository;
-import com.example.common.model.BeerDto;
-import org.awaitility.Awaitility;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -34,6 +31,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@Slf4j
 @ExtendWith(WireMockExtension.class)
 @SpringBootTest
 public class StateMachineBeerOrderManagerIT {
@@ -52,7 +50,8 @@ public class StateMachineBeerOrderManagerIT {
     WireMockServer wireMockServer;
 
     Customer testCustomer;
-    UUID beerId = UUID.randomUUID();
+    BeerDto testBeerDto;
+    UUID beerId;
 
     @TestConfiguration
     static class RestTemplateBuilderProvider {
@@ -66,21 +65,22 @@ public class StateMachineBeerOrderManagerIT {
     }
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws JsonProcessingException {
+        beerId = UUID.randomUUID();
+
         testCustomer = customerRepository.save(Customer.builder()
                 .customerName("Test Customer")
                 .build());
-    }
-
-    @Test
-    void testNewToAllocated() throws JsonProcessingException {
-        BeerDto beerDto = BeerDto.builder()
+        testBeerDto = BeerDto.builder()
                 .id(beerId)
                 .upc("12345")
                 .build();
-
         wireMockServer.stubFor(get("/api/v1/beerUpc/12345")
-                .willReturn(okJson(objectMapper.writeValueAsString(beerDto))));
+                .willReturn(okJson(objectMapper.writeValueAsString(testBeerDto))));
+    }
+
+    @Test
+    void testNewToAllocated() {
         BeerOrder beerOrder = createBeerOrder();
 
         BeerOrder savedBeerOrder = beerOrderManager.create(beerOrder);
@@ -91,6 +91,32 @@ public class StateMachineBeerOrderManagerIT {
 
             assertEquals(BeerOrderStatusEnum.ALLOCATED, updatedBeerOrder.getOrderStatus());
         });
+    }
+
+
+    @Test
+    void testNewToPickedUp() {
+        BeerOrder beerOrder = createBeerOrder();
+
+        BeerOrder savedBeerOrder = beerOrderManager.create(beerOrder);
+        assertNotNull(savedBeerOrder);
+
+        await().untilAsserted(() -> {
+            log.debug("starting await for allocated");
+            BeerOrder updatedBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+
+            assertEquals(BeerOrderStatusEnum.ALLOCATED, updatedBeerOrder.getOrderStatus());
+            log.debug("asserted");
+        });
+        log.debug("continue processing");
+        beerOrderManager.processBeerOrderPickUp(savedBeerOrder.getId());
+
+        await().untilAsserted(() -> {
+            BeerOrder updatedBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+
+            assertEquals(BeerOrderStatusEnum.PICKED_UP, updatedBeerOrder.getOrderStatus());
+        });
+
     }
 
     public BeerOrder createBeerOrder() {

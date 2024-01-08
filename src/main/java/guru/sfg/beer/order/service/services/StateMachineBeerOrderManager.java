@@ -7,6 +7,7 @@ import guru.sfg.beer.order.service.domain.BeerOrderStatusEnum;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.statemachine.BeerOrderStateChangeInterceptor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
@@ -20,11 +21,13 @@ import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATE_ORD
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_FAILED;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
+import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.PICK_UP;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATE_ORDER;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_PASSED;
 import static guru.sfg.beer.order.service.domain.BeerOrderStatusEnum.NEW;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StateMachineBeerOrderManager implements BeerOrderManager {
@@ -51,13 +54,17 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
         BeerOrder beerOrder = beerOrderRepository.findById(orderId).orElseThrow();
 
         if (isValid) {
+            log.debug("Validation passed for order {}, sending VALIDATION_PASSED event to state machine", orderId);
             sendBeerOrderEvent(beerOrder, VALIDATION_PASSED);
 
             BeerOrder validatedOrder = beerOrderRepository.findById(orderId).orElseThrow();
+            log.debug("Valid order state {}, sending ALLOCATE_ORDER event to state machine", validatedOrder.getOrderStatus());
 
             sendBeerOrderEvent(validatedOrder, ALLOCATE_ORDER);
+            log.debug("Event ALLOCATE_ORDER is sent");
         } else {
             sendBeerOrderEvent(beerOrder, VALIDATION_FAILED);
+            log.debug("Event VALIDATION_FAILED is sent");
         }
     }
 
@@ -97,8 +104,9 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
     }
 
     @Override
-    public void processBeerOrderPickUp(BeerOrderDto beerOrder) {
-
+    public void processBeerOrderPickUp(UUID beerId) {
+        BeerOrder beerOrder = beerOrderRepository.findById(beerId).orElseThrow();
+        sendBeerOrderEvent(beerOrder, PICK_UP);
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEvent) {
