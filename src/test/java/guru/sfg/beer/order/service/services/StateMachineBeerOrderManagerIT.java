@@ -93,6 +93,20 @@ public class StateMachineBeerOrderManagerIT {
         });
     }
 
+    @Test
+    void testValidationFailed() {
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setCustomerRef("fail-validation");
+
+        BeerOrder savedBeerOrder = beerOrderManager.create(beerOrder);
+        assertNotNull(savedBeerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder updatedBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+
+            assertEquals(BeerOrderStatusEnum.VALIDATION_ERROR, updatedBeerOrder.getOrderStatus());
+        });
+    }
 
     @Test
     void testNewToPickedUp() {
