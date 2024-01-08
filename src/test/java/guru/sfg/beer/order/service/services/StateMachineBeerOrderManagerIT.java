@@ -162,13 +162,10 @@ public class StateMachineBeerOrderManagerIT {
         assertNotNull(savedBeerOrder);
 
         await().untilAsserted(() -> {
-            log.debug("starting await for allocated");
             BeerOrder updatedBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
 
             assertEquals(BeerOrderStatusEnum.ALLOCATED, updatedBeerOrder.getOrderStatus());
-            log.debug("asserted");
         });
-        log.debug("continue processing");
         beerOrderManager.processBeerOrderPickUp(savedBeerOrder.getId());
 
         await().untilAsserted(() -> {
