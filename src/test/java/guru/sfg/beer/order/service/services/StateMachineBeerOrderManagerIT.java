@@ -107,6 +107,39 @@ public class StateMachineBeerOrderManagerIT {
             assertEquals(BeerOrderStatusEnum.VALIDATION_ERROR, updatedBeerOrder.getOrderStatus());
         });
     }
+    @Test
+    void testAllocationFailed() {
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setCustomerRef("fail-allocation");
+
+        BeerOrder savedBeerOrder = beerOrderManager.create(beerOrder);
+        assertNotNull(savedBeerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder updatedBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+
+            assertEquals(BeerOrderStatusEnum.ALLOCATION_ERROR, updatedBeerOrder.getOrderStatus());
+        });
+    }
+    @Test
+    void testPartialAllocation() {
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setCustomerRef("partial-allocation");
+
+        BeerOrder savedBeerOrder = beerOrderManager.create(beerOrder);
+        assertNotNull(savedBeerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder updatedBeerOrder = beerOrderRepository.findById(savedBeerOrder.getId()).get();
+
+            assertEquals(BeerOrderStatusEnum.PENDING_INVENTORY, updatedBeerOrder.getOrderStatus());
+
+            updatedBeerOrder.getBeerOrderLines().forEach(beerOrderLine -> {
+                assertEquals(beerOrderLine.getOrderQuantity(), 1);
+                assertEquals(beerOrderLine.getQuantityAllocated(), 0);
+            });
+        });
+    }
 
     @Test
     void testNewToPickedUp() {

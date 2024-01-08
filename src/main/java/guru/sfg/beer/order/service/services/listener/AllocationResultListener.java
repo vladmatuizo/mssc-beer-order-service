@@ -2,7 +2,6 @@ package guru.sfg.beer.order.service.services.listener;
 
 import com.example.common.model.BeerOrderDto;
 import com.example.common.model.event.AllocateOrderResult;
-import guru.sfg.beer.order.service.config.MessagingConfig;
 import guru.sfg.beer.order.service.services.BeerOrderManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
