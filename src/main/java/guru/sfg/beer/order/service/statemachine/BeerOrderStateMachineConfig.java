@@ -9,7 +9,6 @@ import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineTransitionConfigurer;
-import org.springframework.statemachine.config.configurers.ExternalTransitionConfigurer;
 
 import java.util.EnumSet;
 
@@ -22,6 +21,7 @@ public class BeerOrderStateMachineConfig  extends StateMachineConfigurerAdapter<
 
     private final Action<BeerOrderStatusEnum, BeerOrderEventEnum> validateOrderAction;
     private final Action<BeerOrderStatusEnum, BeerOrderEventEnum> allocateOrderAction;
+    private final Action<BeerOrderStatusEnum, BeerOrderEventEnum> deallocateOrderAction;
     private final Action<BeerOrderStatusEnum, BeerOrderEventEnum> validationFailedAction;
     private final Action<BeerOrderStatusEnum, BeerOrderEventEnum> allocationFailureAction;
 
@@ -75,7 +75,6 @@ public class BeerOrderStateMachineConfig  extends StateMachineConfigurerAdapter<
                     .event(BeerOrderEventEnum.PICK_UP)
                 .and()
                 .withExternal().source(ALLOCATED).target(CANCELLED)
-                    .event(BeerOrderEventEnum.CANCEL_ORDER);
-        //TODO  add action
+                    .event(BeerOrderEventEnum.CANCEL_ORDER).action(deallocateOrderAction);
     }
 }
