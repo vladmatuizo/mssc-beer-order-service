@@ -1,10 +1,12 @@
 package guru.sfg.beer.order.service.services;
 
 import com.example.common.model.BeerDto;
+import com.example.common.model.event.AllocationFailureEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import guru.sfg.beer.order.service.config.MessagingConfig;
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
 import guru.sfg.beer.order.service.domain.BeerOrderStatusEnum;
@@ -20,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jms.core.JmsTemplate;
 
 import java.util.HashSet;
 import java.util.UUID;
@@ -27,6 +30,7 @@ import java.util.UUID;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static guru.sfg.beer.order.service.config.MessagingConfig.ALLOCATION_FAILURE_QUEUE_NAME;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -48,6 +52,8 @@ public class StateMachineBeerOrderManagerIT {
     ObjectMapper objectMapper;
     @Autowired
     WireMockServer wireMockServer;
+    @Autowired
+    JmsTemplate jmsTemplate;
 
     Customer testCustomer;
     BeerDto testBeerDto;
@@ -120,6 +126,11 @@ public class StateMachineBeerOrderManagerIT {
 
             assertEquals(BeerOrderStatusEnum.ALLOCATION_ERROR, updatedBeerOrder.getOrderStatus());
         });
+
+        AllocationFailureEvent allocationFailureEvent = (AllocationFailureEvent) jmsTemplate.receiveAndConvert(ALLOCATION_FAILURE_QUEUE_NAME);
+
+        assertNotNull(allocationFailureEvent);
+        assertEquals(allocationFailureEvent.orderId(), savedBeerOrder.getId());
     }
     @Test
     void testPartialAllocation() {
