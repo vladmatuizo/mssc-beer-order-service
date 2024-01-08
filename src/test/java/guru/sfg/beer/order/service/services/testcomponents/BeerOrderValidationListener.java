@@ -29,9 +29,12 @@ public class BeerOrderValidationListener {
 
         log.debug("Received validation request for order {}", orderId.toString());
 
-        boolean isValid = !"fail-validation".equals(beerOrder.getCustomerRef());
+        String customerRef = beerOrder.getCustomerRef();
+        boolean isValid = !"fail-validation".equals(customerRef);
 
-        jmsTemplate.convertAndSend(VALIDATE_ORDER_RESPONSE_QUEUE_NAME,
-                new ValidateOrderResult(orderId, isValid));
+        if (!"cancel-order-before-validation".equals(customerRef)) {
+            jmsTemplate.convertAndSend(VALIDATE_ORDER_RESPONSE_QUEUE_NAME,
+                    new ValidateOrderResult(orderId, isValid));
+        }
     }
 }

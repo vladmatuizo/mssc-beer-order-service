@@ -21,6 +21,7 @@ import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATE_ORD
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_FAILED;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_NO_INVENTORY;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.ALLOCATION_SUCCESS;
+import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.CANCEL_ORDER;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.PICK_UP;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATE_ORDER;
 import static guru.sfg.beer.order.service.domain.BeerOrderEventEnum.VALIDATION_FAILED;
@@ -36,7 +37,6 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
 
     private final StateMachineFactory<BeerOrderStatusEnum, BeerOrderEventEnum> stateMachineFactory;
     private final BeerOrderStateChangeInterceptor beerOrderStateChangeInterceptor;
-
     private final BeerOrderRepository beerOrderRepository;
 
     @Override
@@ -107,6 +107,12 @@ public class StateMachineBeerOrderManager implements BeerOrderManager {
     public void processBeerOrderPickUp(UUID beerId) {
         BeerOrder beerOrder = beerOrderRepository.findById(beerId).orElseThrow();
         sendBeerOrderEvent(beerOrder, PICK_UP);
+    }
+
+    @Override
+    public void processBeerOrderCancel(UUID beerId) {
+        BeerOrder beerOrder = beerOrderRepository.findById(beerId).orElseThrow();
+        sendBeerOrderEvent(beerOrder, CANCEL_ORDER);
     }
 
     private void sendBeerOrderEvent(BeerOrder beerOrder, BeerOrderEventEnum beerOrderEvent) {
